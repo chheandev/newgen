@@ -1,820 +1,283 @@
-/* =================================
-   AUDIO
-================================= */
-
-let audioContext;
+// ===============================
+// NEW GEN — MAIN JAVASCRIPT
+// ===============================
 
 
-function initAudio() {
+// LOADING SCREEN
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    document.getElementById("loader").classList.add("hide");
+  }, 1700);
+});
 
-    if (!audioContext) {
 
-        audioContext =
-            new (
-                window.AudioContext ||
-                window.webkitAudioContext
-            )();
+// MOBILE MENU
+const menuBtn = document.getElementById("menuBtn");
+const mobileMenu = document.getElementById("mobileMenu");
 
-    }
+menuBtn.addEventListener("click", () => {
+  mobileMenu.classList.toggle("show");
 
-    if (
-        audioContext.state === "suspended"
-    ) {
+  if (mobileMenu.classList.contains("show")) {
+    menuBtn.textContent = "×";
+  } else {
+    menuBtn.textContent = "☰";
+  }
+});
 
-        audioContext.resume();
+document.querySelectorAll(".mobile-menu a").forEach(link => {
+  link.addEventListener("click", () => {
+    mobileMenu.classList.remove("show");
+    menuBtn.textContent = "☰";
+  });
+});
 
-    }
 
+// DARK MODE
+const themeToggle = document.getElementById("themeToggle");
+
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+
+  if (document.body.classList.contains("dark")) {
+    localStorage.setItem("newgen-theme", "dark");
+  } else {
+    localStorage.setItem("newgen-theme", "light");
+  }
+});
+
+if (localStorage.getItem("newgen-theme") === "dark") {
+  document.body.classList.add("dark");
 }
 
 
-function playSound(
-    frequency = 500,
-    duration = 0.1,
-    volume = 0.08,
-    type = "sine"
-) {
+// SCROLL REVEAL
+const revealElements = document.querySelectorAll(".reveal");
 
-    try {
+const revealObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  },
+  {
+    threshold: 0.12
+  }
+);
 
-        initAudio();
+revealElements.forEach(element => {
+  revealObserver.observe(element);
+});
 
-        const oscillator =
-            audioContext.createOscillator();
 
-        const gain =
-            audioContext.createGain();
+// ALBUM FILTERS
+const filters = document.querySelectorAll(".filter");
+const albumCards = document.querySelectorAll(".album-card");
 
-        oscillator.type = type;
+filters.forEach(filter => {
 
-        oscillator.frequency.setValueAtTime(
-            frequency,
-            audioContext.currentTime
-        );
+  filter.addEventListener("click", () => {
 
-        gain.gain.setValueAtTime(
-            volume,
-            audioContext.currentTime
-        );
+    filters.forEach(item => {
+      item.classList.remove("active");
+    });
 
-        gain.gain.exponentialRampToValueAtTime(
-            0.001,
-            audioContext.currentTime + duration
-        );
+    filter.classList.add("active");
 
-        oscillator.connect(gain);
+    const selected = filter.dataset.filter;
 
-        gain.connect(
-            audioContext.destination
-        );
+    albumCards.forEach(card => {
 
-        oscillator.start();
+      const category = card.dataset.category;
 
-        oscillator.stop(
-            audioContext.currentTime + duration
-        );
+      if (selected === "all" || category === selected) {
+        card.classList.remove("hidden");
+      } else {
+        card.classList.add("hidden");
+      }
 
-    } catch (error) {
+    });
 
-        console.log("Audio unavailable.");
+  });
 
-    }
+});
 
+
+// FULLSCREEN ALBUM VIEWER
+const viewer = document.getElementById("viewer");
+const viewerImage = document.getElementById("viewerImage");
+const viewerClose = document.getElementById("viewerClose");
+const viewerPrev = document.getElementById("viewerPrev");
+const viewerNext = document.getElementById("viewerNext");
+const viewerCounter = document.getElementById("viewerCounter");
+
+const images = [
+  "images/photo_2026-09-25_11-03-48.jpg",
+  "images/photo_2026-09-25_11-03-54.jpg",
+  "images/photo_2026-09-25_11-03-58.jpg",
+  "images/photo_2026-09-25_11-03-59.jpg",
+  "images/photo_2026-09-25_11-04-01.jpg",
+  "images/photo_2026-09-25_11-04-04.jpg"
+];
+
+let currentImage = 0;
+
+
+// OPEN VIEWER
+albumCards.forEach((card, index) => {
+
+  card.addEventListener("click", () => {
+
+    currentImage = index;
+
+    viewerImage.src = images[currentImage];
+
+    updateViewerCounter();
+
+    viewer.classList.add("show");
+
+    document.body.style.overflow = "hidden";
+  });
+
+});
+
+
+// UPDATE COUNTER
+function updateViewerCounter() {
+
+  const number = String(currentImage + 1).padStart(2, "0");
+
+  viewerCounter.textContent = `${number} / 06`;
 }
 
 
-/* =================================
-   LOADER
-================================= */
+// NEXT
+function nextImage() {
 
-window.addEventListener(
-    "load",
-    () => {
+  currentImage++;
 
-        setTimeout(
-            () => {
+  if (currentImage >= images.length) {
+    currentImage = 0;
+  }
 
-                const loader =
-                    document.getElementById(
-                        "loader"
-                    );
+  viewerImage.src = images[currentImage];
 
-                loader.classList.add(
-                    "loaded"
-                );
-
-            },
-            1800
-        );
-
-    }
-);
-
-
-/* =================================
-   CUSTOM CURSOR
-================================= */
-
-const cursorDot =
-    document.querySelector(
-        ".cursor-dot"
-    );
-
-const cursorOutline =
-    document.querySelector(
-        ".cursor-outline"
-    );
-
-const mouseGlow =
-    document.querySelector(
-        ".mouse-glow"
-    );
-
-
-let mouseX = 0;
-let mouseY = 0;
-
-let outlineX = 0;
-let outlineY = 0;
-
-
-document.addEventListener(
-    "mousemove",
-    (event) => {
-
-        mouseX = event.clientX;
-
-        mouseY = event.clientY;
-
-        cursorDot.style.left =
-            mouseX + "px";
-
-        cursorDot.style.top =
-            mouseY + "px";
-
-        mouseGlow.style.left =
-            mouseX + "px";
-
-        mouseGlow.style.top =
-            mouseY + "px";
-
-    }
-);
-
-
-function animateCursor() {
-
-    outlineX +=
-        (mouseX - outlineX) * 0.15;
-
-    outlineY +=
-        (mouseY - outlineY) * 0.15;
-
-    cursorOutline.style.left =
-        outlineX + "px";
-
-    cursorOutline.style.top =
-        outlineY + "px";
-
-    requestAnimationFrame(
-        animateCursor
-    );
-
+  updateViewerCounter();
 }
 
 
-animateCursor();
+// PREVIOUS
+function previousImage() {
 
+  currentImage--;
 
-function setupCursorHover() {
+  if (currentImage < 0) {
+    currentImage = images.length - 1;
+  }
 
-    const hoverElements =
-        document.querySelectorAll(
-            "a, button, .album-card, .activity-card"
-        );
+  viewerImage.src = images[currentImage];
 
-    hoverElements.forEach(
-        (element) => {
-
-            element.addEventListener(
-                "mouseenter",
-                () => {
-
-                    cursorOutline.classList.add(
-                        "hover"
-                    );
-
-                }
-            );
-
-            element.addEventListener(
-                "mouseleave",
-                () => {
-
-                    cursorOutline.classList.remove(
-                        "hover"
-                    );
-
-                }
-            );
-
-        }
-    );
-
+  updateViewerCounter();
 }
 
 
-setupCursorHover();
+viewerNext.addEventListener("click", nextImage);
 
+viewerPrev.addEventListener("click", previousImage);
 
-/* =================================
-   MOBILE MENU
-================================= */
 
-const menuToggle =
-    document.getElementById(
-        "menu-toggle"
-    );
+// CLOSE VIEWER
+function closeViewer() {
 
-const navLinks =
-    document.getElementById(
-        "nav-links"
-    );
+  viewer.classList.remove("show");
 
-
-menuToggle.addEventListener(
-    "click",
-    () => {
-
-        navLinks.classList.toggle(
-            "active"
-        );
-
-        if (
-            navLinks.classList.contains(
-                "active"
-            )
-        ) {
-
-            menuToggle.textContent = "×";
-
-            playSound(
-                650,
-                0.08,
-                0.08,
-                "triangle"
-            );
-
-        } else {
-
-            menuToggle.textContent = "☰";
-
-        }
-
-    }
-);
-
-
-document
-    .querySelectorAll(".nav-links a")
-    .forEach(
-        (link) => {
-
-            link.addEventListener(
-                "click",
-                () => {
-
-                    navLinks.classList.remove(
-                        "active"
-                    );
-
-                    menuToggle.textContent =
-                        "☰";
-
-                }
-            );
-
-        }
-    );
-
-
-/* =================================
-   DARK MODE
-================================= */
-
-const themeToggle =
-    document.getElementById(
-        "theme-toggle"
-    );
-
-
-themeToggle.addEventListener(
-    "click",
-    () => {
-
-        document.body.classList.toggle(
-            "dark"
-        );
-
-        if (
-            document.body.classList.contains(
-                "dark"
-            )
-        ) {
-
-            themeToggle.textContent =
-                "☀";
-
-            playSound(
-                750,
-                0.13,
-                0.1,
-                "sine"
-            );
-
-        } else {
-
-            themeToggle.textContent =
-                "☾";
-
-            playSound(
-                450,
-                0.13,
-                0.1,
-                "sine"
-            );
-
-        }
-
-    }
-);
-
-
-/* =================================
-   SCROLL REVEAL
-================================= */
-
-const revealElements =
-    document.querySelectorAll(
-        ".reveal"
-    );
-
-
-const observer =
-    new IntersectionObserver(
-        (entries) => {
-
-            entries.forEach(
-                (entry) => {
-
-                    if (
-                        entry.isIntersecting
-                    ) {
-
-                        entry.target.classList.add(
-                            "show"
-                        );
-
-                    }
-
-                }
-            );
-
-        },
-        {
-            threshold: 0.12
-        }
-    );
-
-
-revealElements.forEach(
-    (element) => {
-
-        observer.observe(
-            element
-        );
-
-    }
-);
-
-
-/* =================================
-   BUTTON SOUNDS
-================================= */
-
-document
-    .querySelectorAll(".button")
-    .forEach(
-        (button) => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    playSound(
-                        520,
-                        0.07,
-                        0.07,
-                        "triangle"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-/* =================================
-   ALBUM FILTER
-================================= */
-
-const filterButtons =
-    document.querySelectorAll(
-        ".filter-button"
-    );
-
-const albumCards =
-    document.querySelectorAll(
-        ".album-card"
-    );
-
-
-filterButtons.forEach(
-    (button) => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                const filter =
-                    button.dataset.filter;
-
-
-                filterButtons.forEach(
-                    (item) => {
-
-                        item.classList.remove(
-                            "active"
-                        );
-
-                    }
-                );
-
-
-                button.classList.add(
-                    "active"
-                );
-
-
-                albumCards.forEach(
-                    (card) => {
-
-                        const category =
-                            card.dataset.category;
-
-
-                        if (
-                            filter === "all" ||
-                            category === filter
-                        ) {
-
-                            card.classList.remove(
-                                "hidden"
-                            );
-
-                        } else {
-
-                            card.classList.add(
-                                "hidden"
-                            );
-
-                        }
-
-                    }
-                );
-
-
-                playSound(
-                    600,
-                    0.08,
-                    0.07,
-                    "triangle"
-                );
-
-            }
-        );
-
-    }
-);
-
-
-/* =================================
-   ALBUM VIEWER
-================================= */
-
-const albumViewer =
-    document.getElementById(
-        "album-viewer"
-    );
-
-const viewerImage =
-    document.getElementById(
-        "viewer-image"
-    );
-
-const viewerTitle =
-    document.getElementById(
-        "viewer-title"
-    );
-
-const viewerNumber =
-    document.getElementById(
-        "viewer-number"
-    );
-
-const albumClose =
-    document.getElementById(
-        "album-close"
-    );
-
-const albumPrev =
-    document.getElementById(
-        "album-prev"
-    );
-
-const albumNext =
-    document.getElementById(
-        "album-next"
-    );
-
-
-let currentAlbum = 0;
-
-
-const albumData =
-    Array.from(albumCards).map(
-        (card, index) => {
-
-            return {
-
-                image:
-                    card.querySelector(
-                        "img"
-                    ).src,
-
-                title:
-                    card.dataset.title,
-
-                number:
-                    String(index + 1)
-                        .padStart(2, "0")
-
-            };
-
-        }
-    );
-
-
-function showAlbum(index) {
-
-    currentAlbum = index;
-
-    const item =
-        albumData[currentAlbum];
-
-
-    viewerImage.src =
-        item.image;
-
-    viewerTitle.textContent =
-        item.title;
-
-    viewerNumber.textContent =
-        item.number;
-
-
-    albumViewer.classList.add(
-        "active"
-    );
-
-
-    document.body.style.overflow =
-        "hidden";
-
-
-    playSound(
-        620,
-        0.12,
-        0.09,
-        "triangle"
-    );
-
+  document.body.style.overflow = "";
 }
 
+viewerClose.addEventListener("click", closeViewer);
 
-function closeAlbum() {
 
-    albumViewer.classList.remove(
-        "active"
+// CLICK BACKGROUND TO CLOSE
+viewer.addEventListener("click", event => {
+
+  if (event.target === viewer) {
+    closeViewer();
+  }
+
+});
+
+
+// KEYBOARD CONTROLS
+document.addEventListener("keydown", event => {
+
+  if (!viewer.classList.contains("show")) return;
+
+  if (event.key === "Escape") {
+    closeViewer();
+  }
+
+  if (event.key === "ArrowRight") {
+    nextImage();
+  }
+
+  if (event.key === "ArrowLeft") {
+    previousImage();
+  }
+
+});
+
+
+// HERO PARALLAX
+const hero = document.querySelector(".hero");
+const heroBg = document.querySelector(".hero-bg");
+
+hero.addEventListener("mousemove", event => {
+
+  const x = (event.clientX / window.innerWidth - 0.5) * 12;
+  const y = (event.clientY / window.innerHeight - 0.5) * 12;
+
+  heroBg.style.transform =
+    `scale(1.04) translate(${x}px, ${y}px)`;
+
+});
+
+hero.addEventListener("mouseleave", () => {
+
+  heroBg.style.transform = "scale(1.04)";
+
+});
+
+
+// PRELOAD IMAGES
+images.forEach(src => {
+
+  const img = new Image();
+
+  img.src = src;
+
+});
+
+
+// SMOOTH NAVIGATION
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+
+  link.addEventListener("click", event => {
+
+    const target = document.querySelector(
+      link.getAttribute("href")
     );
 
-    document.body.style.overflow =
-        "";
+    if (!target) return;
 
-}
+    event.preventDefault();
 
+    target.scrollIntoView({
+      behavior: "smooth"
+    });
 
-function nextAlbum() {
+  });
 
-    currentAlbum++;
-
-    if (
-        currentAlbum >=
-        albumData.length
-    ) {
-
-        currentAlbum = 0;
-
-    }
-
-    showAlbum(
-        currentAlbum
-    );
-
-}
-
-
-function previousAlbum() {
-
-    currentAlbum--;
-
-    if (
-        currentAlbum < 0
-    ) {
-
-        currentAlbum =
-            albumData.length - 1;
-
-    }
-
-    showAlbum(
-        currentAlbum
-    );
-
-}
-
-
-albumCards.forEach(
-    (card, index) => {
-
-        card.addEventListener(
-            "click",
-            () => {
-
-                showAlbum(
-                    index
-                );
-
-            }
-        );
-
-    }
-);
-
-
-albumClose.addEventListener(
-    "click",
-    closeAlbum
-);
-
-
-albumNext.addEventListener(
-    "click",
-    nextAlbum
-);
-
-
-albumPrev.addEventListener(
-    "click",
-    previousAlbum
-);
-
-
-albumViewer.addEventListener(
-    "click",
-    (event) => {
-
-        if (
-            event.target ===
-            albumViewer
-        ) {
-
-            closeAlbum();
-
-        }
-
-    }
-);
-
-
-/* =================================
-   KEYBOARD CONTROLS
-================================= */
-
-document.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (
-            !albumViewer.classList.contains(
-                "active"
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            event.key === "Escape"
-        ) {
-
-            closeAlbum();
-
-        }
-
-
-        if (
-            event.key === "ArrowRight"
-        ) {
-
-            nextAlbum();
-
-        }
-
-
-        if (
-            event.key === "ArrowLeft"
-        ) {
-
-            previousAlbum();
-
-        }
-
-    }
-);
-
-
-/* =================================
-   PARALLAX HERO
-================================= */
-
-const hero =
-    document.querySelector(
-        ".hero"
-    );
-
-const heroImage =
-    document.querySelector(
-        ".hero-image"
-    );
-
-
-window.addEventListener(
-    "scroll",
-    () => {
-
-        const scroll =
-            window.scrollY;
-
-
-        if (
-            scroll < window.innerHeight
-        ) {
-
-            heroImage.style.transform =
-                `scale(1.04) translateY(${scroll * 0.08}px)`;
-
-        }
-
-    }
-);
-
-
-/* =================================
-   SMOOTH IMAGE PRELOAD
-================================= */
-
-albumData.forEach(
-    (item) => {
-
-        const image =
-            new Image();
-
-        image.src =
-            item.image;
-
-    }
-);
+});
